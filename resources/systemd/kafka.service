@@ -1,0 +1,11 @@
+[Unit]
+Description=Kafka
+
+[Service]
+User=kafka
+Group=kafka
+EnvironmentFile=/etc/sysconfig/kafka
+ExecStart=/usr/lib/redborder/bin/rb_kafka_start.sh
+
+[Install]
+WantedBy=multi-user.target
