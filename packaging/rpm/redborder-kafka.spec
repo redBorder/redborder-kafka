@@ -26,6 +26,7 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 %files
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
+/usr/lib/redborder/bin/rb_kafka_start.sh
 
 %changelog
 * Mon Jul 27 2016 Enrique Jimenez <ejimenez@redborder.com>  - 1.0.0-1
