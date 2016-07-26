@@ -12,7 +12,7 @@ all: rpm
 
 
 SOURCES:
-        mkdir -p SOURCES
+	mkdir -p SOURCES
 
 archive: SOURCES
           cd ../../ && \
@@ -46,7 +46,7 @@ rpm: srpm
           @echo "======= Binary RPMs now available in $(RESULT_DIR) ======="
 
 clean:
-          rm -rf SOURCES pkgs
+	rm -rf SOURCES pkgs
 
 distclean: clean
           rm -f build.log root.log state.log available_pkgs installed_pkgs \
