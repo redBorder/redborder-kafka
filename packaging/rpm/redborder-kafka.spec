@@ -8,7 +8,7 @@ License: AGPL 3.0
 URL: https://github.com/redBorder/redborder-common
 Source0: %{name}-%{version}.tar.gz
 
-Requires: bash 
+Requires: bash confluent-kafka-2.11
 
 %description
 %{summary}
@@ -29,5 +29,9 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 /usr/lib/redborder/bin/rb_kafka_start.sh
 
 %changelog
+
+* Mon Jul 27 2016 Enrique Jimenez <ejimenez@redborder.com>  - 1.0.0-2
+- Added confluent-kafka-2.11 as dependency
 * Mon Jul 27 2016 Enrique Jimenez <ejimenez@redborder.com>  - 1.0.0-1
 - first spec version
+
