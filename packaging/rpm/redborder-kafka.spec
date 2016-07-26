@@ -36,15 +36,9 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 
 %changelog
 
-* Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-4
+* Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-1
 - Changed permissions for kafka script
-
-* Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-3
 - Enabled systemd service in postinst
-
-* Mon Jul 27 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-2
 - Added confluent-kafka-2.11 as dependency
-
-* Mon Jul 27 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-1
 - first spec version
 
