@@ -26,14 +26,18 @@ install -D -m 0755 resources/bin/rb_kafka_start.sh %{buildroot}/usr/lib/redborde
 install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/system/kafka.service
 
 %files
+%defattr(0755,root,root)
+/usr/lib/redborder/bin/rb_kafka_start.sh
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
-/usr/lib/redborder/bin/rb_kafka_start.sh
 
 %post
 %systemd_post kafka.service
 
 %changelog
+
+* Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-4
+- Changed permissions for kafka script
 
 * Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-3
 - Enabled systemd service in postinst
