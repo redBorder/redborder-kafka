@@ -6,6 +6,7 @@ User=kafka
 Group=kafka
 EnvironmentFile=/etc/sysconfig/kafka
 ExecStart=/usr/lib/redborder/bin/rb_kafka_start.sh
+ExecStop=/usr/lib/redborder/bin/rb_kafka_stop.sh
 
 [Install]
 WantedBy=multi-user.target

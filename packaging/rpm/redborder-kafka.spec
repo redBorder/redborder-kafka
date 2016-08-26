@@ -23,11 +23,13 @@ Requires: bash confluent-kafka-2.11
 %install
 mkdir -p %{buildroot}/usr/lib/redborder/bin
 install -D -m 0755 resources/bin/rb_kafka_start.sh %{buildroot}/usr/lib/redborder/bin/rb_kafka_start.sh
+install -D -m 0755 resources/bin/rb_kafka_stop.sh %{buildroot}/usr/lib/redborder/bin/rb_kafka_stop.sh
 install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/system/kafka.service
 
 %files
 %defattr(0755,root,root)
 /usr/lib/redborder/bin/rb_kafka_start.sh
+/usr/lib/redborder/bin/rb_kafka_stop.sh
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
 
@@ -35,7 +37,8 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 %systemd_post kafka.service
 
 %changelog
-
+* Fri Aug 26 2016 Carlos J Mateos <cjmateos@redborder.com> 1.0.0-1
+- Added stop script for systemd unit file
 * Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-1
 - Changed permissions for kafka script
 - Enabled systemd service in postinst
