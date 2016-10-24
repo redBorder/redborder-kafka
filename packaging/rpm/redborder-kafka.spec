@@ -10,7 +10,7 @@ Source0: %{name}-%{version}.tar.gz
 
 BuildRequires: systemd
 
-Requires: bash confluent-kafka-2.11
+Requires: bash java confluent-kafka-2.11
 
 %description
 %{summary}
@@ -44,4 +44,3 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 - Enabled systemd service in postinst
 - Added confluent-kafka-2.11 as dependency
 - first spec version
-
