@@ -34,6 +34,8 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 /usr/lib/systemd/system/kafka.service
 
 %post
+/usr/lib/redborder/bin/rb_rubywrapper.sh -c
+
 %systemd_post kafka.service
 
 %changelog
