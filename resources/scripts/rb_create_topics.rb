@@ -7,7 +7,7 @@ require 'getopt/std'
 #          Constants         #
 # -------------------------- #
 # Default Kafka Topic Definition Path
-KTD_PATH="/etc/redborder"
+KTD_PATH="/etc/kafka"
 # Default Yaml file name
 YAML_FILE="topics_definitions.yml"
 # Target Path

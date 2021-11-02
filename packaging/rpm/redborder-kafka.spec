@@ -21,15 +21,19 @@ Requires: bash java confluent-kafka-2.11
 %build
 
 %install
+mkdir -p %{buildroot}/usr/lib/redborder/scripts
 mkdir -p %{buildroot}/usr/lib/redborder/bin
 install -D -m 0755 resources/bin/rb_kafka_start.sh %{buildroot}/usr/lib/redborder/bin/rb_kafka_start.sh
 install -D -m 0755 resources/bin/rb_kafka_stop.sh %{buildroot}/usr/lib/redborder/bin/rb_kafka_stop.sh
 install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/system/kafka.service
+cp resources/scripts/*.rb %{buildroot}/usr/lib/redborder/scripts
+chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 
 %files
 %defattr(0755,root,root)
 /usr/lib/redborder/bin/rb_kafka_start.sh
 /usr/lib/redborder/bin/rb_kafka_stop.sh
+/usr/lib/redborder/scripts
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
 
