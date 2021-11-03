@@ -53,7 +53,7 @@ def get_current_topics
    info "Cannot connect with #{zk_host} to retrieve current topics or there are not topics created yet"
    return []
   else
-    zk.children("/brokers/topics").sort.uniq
+    zk.children("/brokers/topics").sort.uniq rescue []
   end
 end
 
