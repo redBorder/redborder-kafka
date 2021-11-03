@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'getopt/std'
+require 'zk'
 
 # -------------------------- #
 #          Constants         #
@@ -24,10 +25,10 @@ opt = Getopt::Std.getopts("htq")
 # get the current topics to the zookeeper
 def get_current_topics
   zk_host="zookeeper.service:2181"
-  config=YAML.load_file('/etc/managers.yml')
-  if !config["zookeeper"].nil? or !config["zookeeper2"].nil?
-    zk_host=((config["zookeeper"].nil? ? [] : config["zookeeper"].map{|x| "#{x}:2181"}) + (config["zookeeper2"].nil? ? [] : config["zookeeper2"].map{|x| "#{x}:2182"})).join(",")
-  end
+  # config=YAML.load_file('/etc/managers.yml')
+  # if !config["zookeeper"].nil? or !config["zookeeper2"].nil?
+  #   zk_host=((config["zookeeper"].nil? ? [] : config["zookeeper"].map{|x| "#{x}:2181"}) + (config["zookeeper2"].nil? ? [] : config["zookeeper2"].map{|x| "#{x}:2182"})).join(",")
+  # end
   zk = ZK.new(zk_host)
 
   if zk.nil?
