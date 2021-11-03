@@ -20,6 +20,25 @@ $debug=true
 
 opt = Getopt::Std.getopts("htq")
 
+
+# get the current topics to the zookeeper
+def get_current_topics
+  zk_host="zookeeper.service:2181"
+  config=YAML.load_file('/etc/managers.yml')
+  if !config["zookeeper"].nil? or !config["zookeeper2"].nil?
+    zk_host=((config["zookeeper"].nil? ? [] : config["zookeeper"].map{|x| "#{x}:2181"}) + (config["zookeeper2"].nil? ? [] : config["zookeeper2"].map{|x| "#{x}:2182"})).join(",")
+  end
+  zk = ZK.new(zk_host)
+
+  if zk.nil?
+   puts "Cannot connect with #{zk_host}"
+   exit 1
+  else
+    zk.children("/brokers/topics").sort.uniq
+  end
+end
+
+
 # It shows a simple untagged message
 def logit(text)
   if $debug
@@ -69,17 +88,21 @@ if File.exists?(TARGET)
   # Create topics
   info "Creating topics..."
 
-  config["topics"].each { |topic|
+  #get current topics
+  current_topics = get_current_topics
+  default_topics = config["topics"]
+  partitions=config["partitions"]
+  replication=config["replication"]
 
-    # Get topic name, partitions and replication factor from definition file
-    topic_name=topic[0]
-    partitions=topic[1]["partitions"]
-    replication=topic[1]["replication"]
+  # make array of new topics to be created and reassign
+  topics_to_be_created =  default_topics - current_topics
 
-    info "Creating topic #{topic_name} with #{partitions} partition/s and replication factor #{replication}"
+  topics_to_be_created.each { |topic|
+
+    info "Creating topic #{topic} with #{partitions} partition/s and replication factor #{replication}"
 
     # Run kafka-topics command and save output
-    output=`kafka-topics --create --topic #{topic_name} --partitions #{partitions} --replication-factor #{replication} --zookeeper #{ZK_HOST}`
+    output=`kafka-topics --create --topic #{topic} --partitions #{partitions} --replication-factor #{replication} --zookeeper #{ZK_HOST}`
 
     # If result of previous command is 0 (no errors)
     if $?.to_s.split(" ")[3].to_i == 0
@@ -90,6 +113,8 @@ if File.exists?(TARGET)
     end
 
   }# End topic creation
+
+  #system("/opt/rb/bin/rb_reassign_partitions.sh -de -p #{partitions}")
 
 else
   error "File \"" + YAML_FILE + "\" not found in: " + KTD_PATH
