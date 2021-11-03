@@ -22,24 +22,6 @@ $debug=true
 opt = Getopt::Std.getopts("htq")
 
 
-# get the current topics to the zookeeper
-def get_current_topics
-  zk_host="zookeeper.service:2181"
-  # config=YAML.load_file('/etc/managers.yml')
-  # if !config["zookeeper"].nil? or !config["zookeeper2"].nil?
-  #   zk_host=((config["zookeeper"].nil? ? [] : config["zookeeper"].map{|x| "#{x}:2181"}) + (config["zookeeper2"].nil? ? [] : config["zookeeper2"].map{|x| "#{x}:2182"})).join(",")
-  # end
-  zk = ZK.new(zk_host)
-
-  if zk.nil?
-   puts "Cannot connect with #{zk_host}"
-   exit 1
-  else
-    zk.children("/brokers/topics").sort.uniq
-  end
-end
-
-
 # It shows a simple untagged message
 def logit(text)
   if $debug
@@ -58,6 +40,20 @@ end
 def error(text)
   if $debug
     printf("[ \e[31m ERRO \e[0m ] : %s\n", text)
+  end
+end
+
+# get the current topics to the zookeeper
+def get_current_topics
+  zk_host="zookeeper.service:2181"
+
+  zk = ZK.new(zk_host) rescue nil
+
+  if zk.nil?
+   info "Cannot connect with #{zk_host} to retrieve current topics or there are not topics created yet"
+   return []
+  else
+    zk.children("/brokers/topics").sort.uniq
   end
 end
 
