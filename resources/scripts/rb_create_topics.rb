@@ -19,8 +19,7 @@ ZK_HOST="zookeeper.service"
 # Debug mode: if true, it shows output, else not output
 $debug=true
 
-opt = Getopt::Std.getopts("htq")
-
+opt = Getopt::Std.getopts("ht:q")
 
 # It shows a simple untagged message
 def logit(text)
@@ -67,6 +66,7 @@ def usage()
   logit "rb_create_topics.rb [-h][-t <topic>]"
   logit "    -h         -> Show this help"
   logit "    -q         -> Quiet mode"
+  logit "    -t         -> topic"
 end
 
 # If "h" flag is set, It will print usage and exit with code 0
@@ -92,7 +92,12 @@ if File.exists?(TARGET)
 
   #get current topics
   current_topics = get_current_topics
-  default_topics = config["topics"]
+  if opt["t"].nil?
+    default_topics = config["topics"]
+  else
+    topic = opt["t"].to_s.strip
+    default_topics = [topic]
+  end
   partitions=config["partitions"]
   replication=config["replication"]
 
