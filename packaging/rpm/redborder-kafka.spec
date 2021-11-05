@@ -34,7 +34,7 @@ chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 %defattr(0755,root,root)
 /usr/lib/redborder/bin/rb_kafka_start.sh
 /usr/lib/redborder/bin/rb_kafka_stop.sh
-/usr/lib/redborder/bin/rb_delete_topics
+/usr/lib/redborder/bin/rb_delete_topics.sh
 /usr/lib/redborder/scripts
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
