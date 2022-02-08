@@ -115,12 +115,12 @@ if File.exists?(TARGET)
     if $?.to_s.split(" ")[3].to_i == 0
       info output
     else
-      error "Error to create topic #{topic_name}\n"
+      error "Error to create topic #{topic}\n"
       logit output + "\n"
     end
 
   }# End topic creation
-
+  info "End of topic creation"
   #system("/opt/rb/bin/rb_reassign_partitions.sh -de -p #{partitions}")
 
 else
