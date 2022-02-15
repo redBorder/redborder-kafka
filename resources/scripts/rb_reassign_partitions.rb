@@ -121,7 +121,6 @@ end
 Chef::Config.from_file("/etc/chef/client.rb")
 Chef::Config[:node_name]  = "admin"
 Chef::Config[:client_key] = "/etc/chef/admin.pem"
-#Chef::Config[:client_key] = "/etc/chef-server/admin.pem"     #TODO should we add it?
 Chef::Config[:http_retry_count] = 5
 
 if !File.directory?('/tmp/kafka_reassing')
@@ -183,7 +182,6 @@ else
             realtimes = []
             array.shuffle.each do |x|
               if x.end_with?":8084"
-             #if x.end_with?":8082"
                 realtimes << x
               end
             end
@@ -346,19 +344,6 @@ else
             end
           end
         end
-        # if topic_details.size>0  #TODO check this
-        #   role = Chef::Role.load("manager")
-        #   role.override_attributes["redBorder"] = {} if role.override_attributes["redBorder"].nil?
-        #   role.override_attributes["redBorder"]["manager"] = {} if role.override_attributes["redBorder"]["manager"].nil?
-        #   role.override_attributes["redBorder"]["manager"]["kafka"] = {} if role.override_attributes["redBorder"]["manager"]["kafka"].nil?
-        #   role.override_attributes["redBorder"]["manager"]["kafka"]["topics"] = {} if role.override_attributes["redBorder"]["manager"]["kafka"]["topics"].nil?
-        #   topic_details.each do |t, v|
-        #     role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t] = {} if role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t].nil?
-        #     role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t]["partitions"] = v["partitions"].to_i
-        #     role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t]["replicas"]   = @desired_replicas.to_i
-        #   end
-        #   logit "ERROR: Cannot save partitions into role manager"  if !role.save
-        # end
 
         if relocate_data_zk["partitions"].size>0
           logit "    - Write: #{relocate_data_zk.to_json}  #{@execute ? "" : "(dry-run)"}" if @debug
