@@ -1,5 +1,4 @@
-#!/usr/bin/ruby
-
+#!/usr/bin/env ruby
 #######################################################################
 ## Copyright (c) 2014 ENEO Tecnología S.L.
 ## This file is part of redBorder.
@@ -87,7 +86,9 @@ def min_partitions(partitions, exclude_partition)
   min = excludes.map { |_, v| v.size }.min
   i = excludes.select { |_, v| v.size == min }.keys.sample
   [min, i]
+  return "/brokers/topics/#{topic}"
 end
+
 
 @log = Syslog::Logger.new 'rb_kafka_reassign_partitions'
 @desired_partitions=1
@@ -116,7 +117,6 @@ if opt["t"]
 else
   @topics = nil
 end
-
 
 Chef::Config.from_file("/etc/chef/client.rb")
 Chef::Config[:node_name]  = "admin"
@@ -183,6 +183,7 @@ else
             realtimes = []
             array.shuffle.each do |x|
               if x.end_with?":8084"
+             #if x.end_with?":8082"
                 realtimes << x
               end
             end
@@ -229,6 +230,7 @@ else
                   topic_details[topic]["partitions"] = real_desired_partitions
 
                   system("/usr/bin/kafka-topics --zookeeper \"#{zk_host}\" --partition #{real_desired_partitions} --topic \"#{topic}\" --alter ")
+
                   partitions = get_partitions(zk, topic)
                   logit "        > New Partitions : #{partitions.join(",")}  (total: #{partitions.size})" if @debug
                 else
