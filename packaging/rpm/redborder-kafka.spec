@@ -26,6 +26,8 @@ mkdir -p %{buildroot}/usr/lib/redborder/bin
 install -D -m 0755 resources/bin/rb_kafka_start.sh %{buildroot}/usr/lib/redborder/bin/rb_kafka_start.sh
 install -D -m 0755 resources/bin/rb_kafka_stop.sh %{buildroot}/usr/lib/redborder/bin/rb_kafka_stop.sh
 install -D -m 0755 resources/bin/rb_delete_topics.sh %{buildroot}/usr/lib/redborder/bin/rb_delete_topics.sh
+install -D -m 0755 resources/bin/rb_consumer.sh %{buildroot}/usr/lib/redborder/bin/rb_consumer.sh
+install -D -m 0755 resources/bin/rb_producer.sh %{buildroot}/usr/lib/redborder/bin/rb_producer.sh
 install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/system/kafka.service
 cp resources/scripts/*.rb %{buildroot}/usr/lib/redborder/scripts
 chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
@@ -35,6 +37,8 @@ chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 /usr/lib/redborder/bin/rb_kafka_start.sh
 /usr/lib/redborder/bin/rb_kafka_stop.sh
 /usr/lib/redborder/bin/rb_delete_topics.sh
+/usr/lib/redborder/bin/rb_consumer.sh
+/usr/lib/redborder/bin/rb_producer.sh
 /usr/lib/redborder/scripts
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
