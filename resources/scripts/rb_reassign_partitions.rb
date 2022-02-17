@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-
 #######################################################################
 ## Copyright (c) 2014 ENEO Tecnología S.L.
 ## This file is part of redBorder.
@@ -15,14 +14,21 @@
 ## along with redBorder. If not, see <http://www.gnu.org/licenses/>.
 ########################################################################
 
-require "uuidtools"
-require 'rubygems'
-require 'zk'
-require 'yaml'
-require 'json'
-require 'syslog/logger'
-require "getopt/std"
-require 'chef'
+begin
+
+  require 'chef'
+  require "uuidtools"
+  require 'rubygems'
+  require 'zk'
+  require 'yaml'
+  require 'json'
+  require 'syslog/logger'
+  require "getopt/std"
+
+rescue LoadError => e
+  puts e
+  exit 1
+end
 
 ADMINPATH="/admin"
 CONTROLLERPATH="/controller"
@@ -50,37 +56,39 @@ def usage
 end
 
 def topic_path(topic)
-  return "/brokers/topics/#{topic}"
+  "/brokers/topics/#{topic}"
 end
 
 def partitions_path(topic)
-  return "#{topic_path(topic)}/partitions"
+  "#{topic_path(topic)}/partitions"
 end
 
 def partition_path(topic, partition)
-  return "#{partition_path(topic)}/#{partition}"
+  "#{partitions_path(topic)}/#{partition}"
 end
 
 def partition_path_state(topic, partition)
-  return "#{partition_path(topic, partition)}/state"
+  "#{partition_path(topic, partition)}/state"
 end
 
 def get_partitions(zk, topic)
-  return zk.children(partitions_path(topic)).map{|k| k.to_i}.sort.uniq
+  zk.children(partitions_path(topic)).map{|k| k.to_i}.sort.uniq
 end
 
 def max_partitions(partitions)
-	max = partitions.map { |_, v| v.size }.max
-	i = partitions.select { |_, v| v.size == max }.keys.sample
-	[max, i]
+  max = partitions.map { |_, v| v.size }.max
+  i = partitions.select { |_, v| v.size == max }.keys.sample
+  [max, i]
 end
 
 def min_partitions(partitions, exclude_partition)
-	excludes = partitions.select { |_,v| !v.include?(exclude_partition)}
-	min = excludes.map { |_, v| v.size }.min
-	i = excludes.select { |_, v| v.size == min }.keys.sample
-	[min, i]
+  excludes = partitions.select { |_,v| !v.include?(exclude_partition)}
+  min = excludes.map { |_, v| v.size }.min
+  i = excludes.select { |_, v| v.size == min }.keys.sample
+  [min, i]
+  return "/brokers/topics/#{topic}"
 end
+
 
 @log = Syslog::Logger.new 'rb_kafka_reassign_partitions'
 @desired_partitions=1
@@ -110,8 +118,6 @@ else
   @topics = nil
 end
 
-index=0
-
 Chef::Config.from_file("/etc/chef/client.rb")
 Chef::Config[:node_name]  = "admin"
 Chef::Config[:client_key] = "/etc/chef/admin.pem"
@@ -122,8 +128,9 @@ if !File.directory?('/tmp/kafka_reassing')
 end
 
 zk_host="zookeeper.service:2181"
+
 if opt["g"]
-  system("kafka-preferred-replica-election.sh --zookeeper #{zk_host}")
+  system("/usr/bin/kafka-preferred-replica-election --zookeeper #{zk_host}")
 else
   begin
     zk = ZK.new(zk_host)
@@ -153,7 +160,8 @@ else
 
       if brokerids.size>0
         zk.create(ADMINPATH, "null") if !zk.exists?(ADMINPATH)
-         if brokerids.size==1
+
+        if brokerids.size==1
           @desired_replicas = 1
         elsif brokerids.size==2 and @desired_replicas==0
           @desired_replicas = 1
@@ -173,7 +181,7 @@ else
             array = zk.children("/druid/announcements").map{|k| k.to_s}.sort.uniq.shuffle
             realtimes = []
             array.shuffle.each do |x|
-              if x.end_with?":8082"
+              if x.end_with?":8084"
                 realtimes << x
               end
             end
@@ -219,7 +227,8 @@ else
                   topic_details[topic] = {}
                   topic_details[topic]["partitions"] = real_desired_partitions
 
-                  system("/bin/kafka-topics --zookeeper \"#{zk_host}\" --partition #{real_desired_partitions} --topic \"#{topic}\" --alter &>/dev/null")
+                  system("/usr/bin/kafka-topics --zookeeper \"#{zk_host}\" --partition #{real_desired_partitions} --topic \"#{topic}\" --alter ")
+
                   partitions = get_partitions(zk, topic)
                   logit "        > New Partitions : #{partitions.join(",")}  (total: #{partitions.size})" if @debug
                 else
@@ -233,152 +242,138 @@ else
               end
 
               if partitions.size<real_desired_partitions
-                logit "        > ERROR: The current partitions (#{partitions.size}) doens't correspond with the desired one (#{real_desired_partitions}) (#{topic} - zk: #{zk_host})"
+                logit "        > ERROR: The current partitions (#{partitions.size}) don't correspond with the desired one (#{real_desired_partitions}) (#{topic} - zk: #{zk_host})"
               else
                 relocate_data =  {}
 
-        	if opt['n'].nil?
-          	  partitions.each { |p| relocate_data[p.to_s]=[] }
+                if opt['n'].nil?
+                  partitions.each { |p| relocate_data[p.to_s]=[] }
                   for i in 1..@desired_replicas do
                     relocate_data.each do |p, array|
-                    while array.include? brokerids[index]
+                      while array.include? brokerids[index]
+                        index=index+1
+                        index=0 if index>=brokerids.length
+                      end
+                      array<<brokerids[index]
                       index=index+1
                       index=0 if index>=brokerids.length
                     end
-                    array<<brokerids[index]
-                    index=index+1
-                    index=0 if index>=brokerids.length
                   end
-                end
                 else
-          	  brokers_partitions = {}
-          	  partitions = get_partitions(zk, topic)
+                  brokers_partitions = {}
+                  partitions = get_partitions(zk, topic)
 
-          	  if(current_partitions < (real_desired_partitions))
-          	    partitions_to_move = (current_partitions .. (real_desired_partitions - 1)).to_a
-          	    partitions_to_move_aux = partitions_to_move.clone
-          	    partitions.each do |partition|
-          	    zktdata,stat = zk.get("/brokers/topics/#{topic}/partitions/#{partition}/state")
-          	    brokers = JSON.parse(zktdata)["isr"]
+                  if(current_partitions < (real_desired_partitions))
+                    partitions_to_move = (current_partitions .. (real_desired_partitions - 1)).to_a
+                    partitions_to_move_aux = partitions_to_move.clone
+                    partitions.each do |partition|
+                      zktdata,stat = zk.get("/brokers/topics/#{topic}/partitions/#{partition}/state")
+                      brokers = JSON.parse(zktdata)["isr"]
 
-          	    brokers.each do |broker|
-          	      brokers_partitions[broker] ||= []
-          	      brokers_partitions[broker] << partition
-          	    end
-          	  end
+                      brokers.each do |broker|
+                        brokers_partitions[broker] ||= []
+                        brokers_partitions[broker] << partition
+                      end
+                    end
 
-          	  computing = true
+                    computing = true
 
-          	  while (computing) do
-          	    max, brokerMax = max_partitions(brokers_partitions)
-          	    partitions_to_move.each do |partition|
-          	      min, brokerMin = min_partitions(brokers_partitions, partition)
-          	      if !(brokerMin.nil?)
-          	        if !(max == min || (max -1) == min)
-          		  if(brokers_partitions[brokerMax].include? partition)
-          		    if(!brokers_partitions[brokerMin].include? partition)
-          		      partitions_to_move_aux.delete(partition)
-          		      brokers_partitions[brokerMax].delete(partition)
-          		      brokers_partitions[brokerMin] << partition
-          		    end
-          		  end
-          		  partitions_to_move = partitions_to_move_aux.clone
-          		  computing = true
-          		else
-          		  computing = false
-          		end
-          	      else
-          		computing = false
-          	      end
-          	    end
-     	              sleep 5
-          	  end
+                    while (computing) do
+                      max, brokerMax = max_partitions(brokers_partitions)
+                      partitions_to_move.each do |partition|
+                        min, brokerMin = min_partitions(brokers_partitions, partition)
+                        if !(brokerMin.nil?)
+                          if !(max == min || (max -1) == min)
+                            if(brokers_partitions[brokerMax].include? partition)
+                              if(!brokers_partitions[brokerMin].include? partition)
+                                partitions_to_move_aux.delete(partition)
+                                brokers_partitions[brokerMax].delete(partition)
+                                brokers_partitions[brokerMin] << partition
+                              end
+                            end
+                            partitions_to_move = partitions_to_move_aux.clone
+                            computing = true
+                          else
+                            computing = false
+                          end
+                        else
+                          computing = false
+                        end
+                      end
 
-          	  last_leader = 0
-          	  for partition in current_partitions..(real_desired_partitions - 1) do
-          	    brokers_ids = brokers_partitions.select{|_,v| v.include?(partition)}.keys.sort.reverse
-          	    relocate_data.merge!(partition => brokers_ids)
-          	  end
-          	else
-          	  logit "    - Topic #{topic} has #{real_desired_partitions} partitions or more!"
-          	  exit 0
+                      sleep 5
+                    end
+
+                    for partition in current_partitions..(real_desired_partitions - 1) do
+                      brokers_ids = brokers_partitions.select{|_,v| v.include?(partition)}.keys.sort.reverse
+                      relocate_data.merge!(partition => brokers_ids)
+                    end
+                  else
+                    logit "    - Topic #{topic} has #{real_desired_partitions} partitions or more!"
+                    exit 0
+                  end
+
                 end
 
-              end
+                logit "        > Desired partitions replicas: #{relocate_data.to_json}" if @debug
 
-              logit "        > Desired partitions replicas: #{relocate_data.to_json}" if @debug
-
-              #Get current data
-              same=true
-              error=false
-              zktdata,stat = zk.get(topic_path(topic))
-              zktdata = YAML.load(zktdata)
-              if zktdata["partitions"].nil?
-                logit "ERROR: This topic has no readable partitions (#{topic}) on #{zk_host}"
-                error=true
-              else
-                same=false if zktdata["partitions"]!=relocate_data
-              end
-
-              if same
-                logit "        > Remote zk has the same replicas configured" if @debug and !error
-              else
-                relocate_data.each do |pid, rep|
-                  relocate_data_zk["partitions"] << {"topic"=>topic, "partition"=>pid.to_i, "replicas"=>rep.map{|x| x.to_i}.uniq }
+                #Get current data
+                same=true
+                error=false
+                zktdata,stat = zk.get(topic_path(topic))
+                zktdata = YAML.load(zktdata)
+                if zktdata["partitions"].nil?
+                  logit "ERROR: This topic has no readable partitions (#{topic}) on #{zk_host}"
+                  error=true
+                else
+                  same=false if zktdata["partitions"]!=relocate_data
                 end
 
-                logit "        > Current partitions replicas: #{zktdata["partitions"].to_json} " if @debug
+                if same
+                  logit "        > Remote zk has the same replicas configured" if @debug and !error
+                else
+                  relocate_data.each do |pid, rep|
+                    relocate_data_zk["partitions"] << {"topic"=>topic, "partition"=>pid.to_i, "replicas"=>rep.map{|x| x.to_i}.uniq }
+                  end
+
+                  logit "        > Current partitions replicas: #{zktdata["partitions"].to_json} " if @debug
+                end
               end
+            else
+              logit "ERROR: Topic \"#{topic}\" not found on #{zk_host}  (#{partitions_path(topic)})"
             end
-          else
-            logit "ERROR: Topic \"#{topic}\" not found on #{zk_host}  (#{partitions_path(topic)})"
           end
         end
-      end
 
-      if topic_details.size>0
-        role = Chef::Role.load("manager")
-        role.override_attributes["redBorder"] = {} if role.override_attributes["redBorder"].nil?
-        role.override_attributes["redBorder"]["manager"] = {} if role.override_attributes["redBorder"]["manager"].nil?
-        role.override_attributes["redBorder"]["manager"]["kafka"] = {} if role.override_attributes["redBorder"]["manager"]["kafka"].nil?
-        role.override_attributes["redBorder"]["manager"]["kafka"]["topics"] = {} if role.override_attributes["redBorder"]["manager"]["kafka"]["topics"].nil?
-        topic_details.each do |t, v|
-          role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t] = {} if role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t].nil?
-          role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t]["partitions"] = v["partitions"].to_i
-          role.override_attributes["redBorder"]["manager"]["kafka"]["topics"][t]["replicas"]   = @desired_replicas.to_i
+        if relocate_data_zk["partitions"].size>0
+          logit "    - Write: #{relocate_data_zk.to_json}  #{@execute ? "" : "(dry-run)"}" if @debug
+          if @execute
+            json_file = "/tmp/kafka_reassing/#{UUIDTools::UUID.random_create.to_s}"
+            File.open("#{json_file}", 'w'){|f| f.write(relocate_data_zk.to_json) }
+            logit "Executing /usr/bin/kafka-reassign-partitions.sh --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute"
+            system("/usr/bin/kafka-reassign-partitions.sh --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute")
+            counter=0
+            while zk.exists?(REASSIGN_PATH) and counter<30 do
+              sleep 1
+              counter=counter+1
+            end
+            File.delete("#{json_file}")
+          end
         end
-        logit "ERROR: Cannot save partitions into role manager"  if !role.save
-      end
 
-      if relocate_data_zk["partitions"].size>0
-        logit "    - Write: #{relocate_data_zk.to_json}  #{@execute ? "" : "(dry-run)"}" if @debug
-        if @execute
-          json_file = "/tmp/kafka_reassing/#{UUIDTools::UUID.random_create.to_s}"
-          File.open("#{json_file}", 'w'){|f| f.write(relocate_data_zk.to_json) }
-          logit "Executing /bin/kafka-reassign-partitions --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute"
-          system("/bin/kafka-reassign-partitions --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute")
+        if @force_leader or (relocate_data_zk["partitions"].size>0 and @execute)
+          logit "    - Force leader election" if @force_leader
+          zk.create(PREFERED_PATH, relocate_data_zk.to_json)
           counter=0
-          while zk.exists?(REASSIGN_PATH) and counter<30 do
+          while zk.exists?(PREFERED_PATH) and counter<30 do
             sleep 1
             counter=counter+1
           end
-          File.delete("#{json_file}")
         end
+      else
+        logit "There are no available brokers on #{zk_host}"
       end
-
-      if @force_leader or (relocate_data_zk["partitions"].size>0 and @execute)
-        logit "    - Force leader election" if @force_leader
-        zk.create(PREFERED_PATH, relocate_data_zk.to_json)
-        counter=0
-        while zk.exists?(PREFERED_PATH) and counter<30 do
-          sleep 1
-          counter=counter+1
-        end
-      end
-    else
-      logit "There are no available brokers on #{zk_host}"
     end
-  end
   rescue => e
     logit "ERROR: Exception on #{zk_host}"
     puts "#{e}\n\t#{e.backtrace.join("\n\t")}" if @debug
@@ -389,4 +384,3 @@ else
     end
   end
 end
-
