@@ -3,7 +3,7 @@
 require 'yaml'
 require 'getopt/std'
 require 'zk'
-
+require 'getopt/long'
 # ---------------------------#
 #          Constants         #
 # -------------------------- #
@@ -16,8 +16,6 @@ TARGET=KTD_PATH+"/"+YAML_FILE
 # Zookeeper Host
 ZK_HOST="zookeeper.service"
 
-# Debug mode: if true, it shows output, else not output
-$debug=true
 
 opt = Getopt::Std.getopts("ht:q")
 
@@ -52,16 +50,7 @@ end
 # get the current topics to the zookeeper
 def get_current_topics
 
-  begin
-    zk = `consul catalog services | grep -i zookeeper`
-    raise("Something went wrong with Consul. Zookeeper service is not registered.") if (zk.eql? "")
-  rescue RuntimeError => e
-    error(e)
-    puts "Exiting.."
-    exit 0
-  end
-
-  zk_host="zookeeper.service:2181"
+  zk_host=ZK_HOST + ":2181"
 
   zk = ZK.new(zk_host) rescue nil
 
@@ -80,31 +69,34 @@ end
 
 # It shows usage message
 def usage()
-  logit "rb_create_topics.rb [-h][-t <topic>]"
+  logit "rb_create_topics [-h][-t <topic>]"
   logit "    -h         -> Show this help"
-  logit "    -q         -> Quiet mode"
-  logit "    -t         -> topic"
+  logit "    -q         -> Quiet mode (optional)"
+  logit "    -t         -> topic (optional)"
+  logit "Example: rb_create_topics -t"
 end
 
-# If "h" flag is set, It will print usage and exit with code 0
-if opt["h"]
-  usage
-  exit 0
-end
-
-# If "q" flag is set, It will set to quiet mode (no output)
-if opt["q"]
-  $debug=false
-end
-
-# Get current topics
-current_topics = get_current_topics
 
 # Check whether file exists
 if File.exists?(TARGET)
 
   # Load file from target path (See constants)
   config=YAML.load_file(TARGET)
+
+  #------------------------------Options-----------------------------#
+  # If "h" flag is set, It will print usage and exit with code 0
+  if opt["h"]
+    usage
+    exit 0
+  end
+
+  # Debug mode: if true, it shows output, else not output
+  # If "q" flag is set, It will set to quiet mode (no output)
+  if opt["q"]
+    $debug=false
+  else
+    $debug=true
+  end
 
   if opt["t"].nil?
     default_topics = config["topics"]
@@ -114,58 +106,49 @@ if File.exists?(TARGET)
   end
   partitions=config["partitions"]
   replication=config["replication"]
+  #--------------------------End of options--------------------------#
+
+  # Get current topics
+  current_topics = get_current_topics
 
   # make array of new topics to be created and reassign
   topics_to_be_created =  default_topics - current_topics
 
-  if topics_to_be_created.empty?
-    info "There is no new topics to be created. Exiting...\n"
-    exit 0
-  end
+  if !topics_to_be_created.empty?
 
-  info "Creating kafka topics...\n"
+    info "Creating kafka topics...\n"
 
-  info "Topics to be created:\n"
-  puts topics_to_be_created
-  puts
+    info "Topics to be created:\n"
+    puts topics_to_be_created
 
-  topics_to_be_created.each { |topic|
+    topics_to_be_created.each { |topic|
 
-    info "Creating topic #{topic} with #{partitions} partition/s and replication factor #{replication}."
+      info "Creating topic #{topic} with #{partitions} partition/s and replication factor #{replication}."
 
-    # Run kafka-topics command and save output
-    output=`kafka-topics --create --topic #{topic} --partitions #{partitions} --replication-factor #{replication} --zookeeper #{ZK_HOST}`
+      # Run kafka-topics command and save output
+      output=`kafka-topics --create --topic #{topic} --partitions #{partitions} --replication-factor #{replication} --zookeeper #{ZK_HOST}`
 
-    # If result of previous command is 0 (no errors)
-    if $?.to_s.split(" ")[3].to_i == 0
-
-      success "Topic created!\n"
-    else
-      if output.include? "available brokers: 0"
-        brokers=0
-        info "There are no available brokers. Waiting for them to be ready again..."
-        while brokers.to_i < "#{replication}".to_i do
-          brokers=`zkCli.sh ls /brokers/ids quit 2>/dev/null | grep WatchedEvent -A 1 | grep -v WatchedEvent -c`
-        end
-        success "Brokers are ready!"
-        output=`kafka-topics --create --topic #{topic} --partitions #{partitions} --replication-factor #{replication} --zookeeper #{ZK_HOST}`
-        if $?.to_s.split(" ")[3].to_i == 0
-          success "Topic created!\n"
-        else
-          error "Error creating topic #{topic}...\n"
-          logit output + "\n"
-        end
+      # If result of previous command is 0 (no errors)
+      if $?.to_s.split(" ")[3].to_i == 0
+        success "Topic created!\n"
       else
         error "Error creating topic #{topic}...\n"
         logit output + "\n"
       end
-    end
+    }
 
-  }# End topic creation
-  success "End of topic creation \n"
+  else
+    info "There is no new topics to be created. \n"
+  end
+  # End topic creation
+  success "End of topic creation \n" if !topics_to_be_created.empty?
 
   info "Reassigning kafka partitions..."
-  `/usr/lib/rvm/rubies/ruby-2.2.4/bin/ruby /usr/lib/redborder/scripts/rb_reassign_partitions.rb -de -p #{partitions}`
+  if $debug
+    system("rb_reassign_partitions -de -p #{partitions}")
+  else
+    system("rb_reassign_partitions  -e -p #{partitions}")
+  end
 
   if $?.to_s.split(" ")[3].to_i == 0
     success "Partitions were reassigned!"
