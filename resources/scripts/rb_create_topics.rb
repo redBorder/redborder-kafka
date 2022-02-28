@@ -15,23 +15,6 @@ YAML_FILE="topics_definitions.yml"
 TARGET=KTD_PATH+"/"+YAML_FILE
 # Zookeeper Host
 ZK_HOST="zookeeper.service"
-#!/usr/bin/env ruby
-
-require 'yaml'
-require 'getopt/std'
-require 'zk'
-require 'getopt/long'
-# ---------------------------#
-#          Constants         #
-# -------------------------- #
-# Default Kafka Topic Definition Path
-KTD_PATH="/etc/kafka"
-# Default Yaml file name
-YAML_FILE="topics_definitions.yml"
-# Target Path
-TARGET=KTD_PATH+"/"+YAML_FILE
-# Zookeeper Host
-ZK_HOST="zookeeper.service"
 
 
 opt = Getopt::Std.getopts("ht:q")
