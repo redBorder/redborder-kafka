@@ -144,18 +144,20 @@ if File.exists?(TARGET)
   success "End of topic creation \n" if !topics_to_be_created.empty?
 
   info "Reassigning kafka partitions..."
-  if $debug
-    system("rb_reassign_partitions -de -p #{partitions}")
+  if partitions > 1
+    if $debug
+      system("rb_reassign_partitions -de")
+    else
+      system("rb_reassign_partitions -e")
+    end
+    if $?.to_s.split(" ")[3].to_i == 0
+      success "Partitions were reassigned!"
+    else
+      error "There was an error reassigning partitions"
+    end
   else
-    system("rb_reassign_partitions  -e -p #{partitions}")
+    info "There is only one partition, so it cannot be reassigned."
   end
-
-  if $?.to_s.split(" ")[3].to_i == 0
-    success "Partitions were reassigned!"
-  else
-    error "There was an error reassigning partitions"
-  end
-
 else
   error "File \"" + YAML_FILE + "\" not found in: " + KTD_PATH
 end # End check file condition
