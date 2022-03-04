@@ -86,7 +86,6 @@ def min_partitions(partitions, exclude_partition)
   min = excludes.map { |_, v| v.size }.min
   i = excludes.select { |_, v| v.size == min }.keys.sample
   [min, i]
-  return "/brokers/topics/#{topic}"
 end
 
 
@@ -350,8 +349,8 @@ else
           if @execute
             json_file = "/tmp/kafka_reassing/#{UUIDTools::UUID.random_create.to_s}"
             File.open("#{json_file}", 'w'){|f| f.write(relocate_data_zk.to_json) }
-            logit "Executing /usr/bin/kafka-reassign-partitions.sh --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute"
-            system("/usr/bin/kafka-reassign-partitions.sh --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute")
+            logit "Executing /usr/bin/kafka-reassign-partitions --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute"
+            system("/usr/bin/kafka-reassign-partitions --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute")
             counter=0
             while zk.exists?(REASSIGN_PATH) and counter<30 do
               sleep 1
