@@ -32,6 +32,13 @@ install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/
 cp resources/scripts/*.rb %{buildroot}/usr/lib/redborder/scripts
 chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 
+%pre
+getent group kafka >/dev/null || groupadd -r kafka
+getent passwd kafka >/dev/null || \
+    useradd -r -g kafka -d / -s /sbin/nologin \
+    -c "User for Kafka"
+exit 0
+
 %files
 %defattr(0755,root,root)
 /usr/lib/redborder/bin/rb_kafka_start.sh
