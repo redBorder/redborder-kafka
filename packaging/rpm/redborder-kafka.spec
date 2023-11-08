@@ -1,3 +1,5 @@
+%undefine __brp_mangle_shebangs
+
 Name: redborder-kafka
 Version: %{__version}
 Release: %{__release}%{?dist}
