@@ -31,6 +31,7 @@ install -D -m 0755 resources/bin/rb_delete_topics.sh %{buildroot}/usr/lib/redbor
 install -D -m 0755 resources/bin/rb_consumer.sh %{buildroot}/usr/lib/redborder/bin/rb_consumer.sh
 install -D -m 0755 resources/bin/rb_producer.sh %{buildroot}/usr/lib/redborder/bin/rb_producer.sh
 install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/system/kafka.service
+install -D -m 0755 resources/bin/rb_get_partitions.sh %{buildroot}/usr/lib/redborder/bin/rb_get_partitions.sh
 cp resources/scripts/*.rb %{buildroot}/usr/lib/redborder/scripts
 chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 
@@ -41,6 +42,7 @@ chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 /usr/lib/redborder/bin/rb_delete_topics.sh
 /usr/lib/redborder/bin/rb_consumer.sh
 /usr/lib/redborder/bin/rb_producer.sh
+/usr/lib/redborder/bin/rb_get_partitions.sh
 /usr/lib/redborder/scripts
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
@@ -51,8 +53,12 @@ chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 %systemd_post kafka.service
 
 %changelog
+* Thu Jun 06 2024 Miguel Negron <manegron@redborder.com>
+- Add rb_get_partitions.sh
+
 * Fri Aug 26 2016 Carlos J Mateos <cjmateos@redborder.com> 1.0.0-1
 - Added stop script for systemd unit file
+
 * Tue Jul 28 2016 Enrique Jimenez <ejimenez@redborder.com> 1.0.0-1
 - Changed permissions for kafka script
 - Enabled systemd service in postinst
