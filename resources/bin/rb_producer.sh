@@ -15,7 +15,7 @@
 #######################################################################
 
 TOPIC="$1"
-ZK_HOST="kafka.service:9092"
+KAFKA_HOST="kafka.service:9092"
 
 function usage() {
     echo "$0 [-t <topic>][-h]"
@@ -37,7 +37,7 @@ fi
 if [ "x$TOPIC" == "x" ]; then
     usage
 else
-    echo "Producing $TOPIC data (brokers: $brokerlist) ..."
-    /usr/bin/kafka-console-producer --broker-list $ZK_HOST --topic $TOPIC
+    echo "Producing $TOPIC data (kafka: $KAFKA_HOST) ..."
+    /usr/bin/kafka-console-producer --broker-list $KAFKA_HOST --topic $TOPIC
 fi
 

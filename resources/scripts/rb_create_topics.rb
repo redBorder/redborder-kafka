@@ -16,6 +16,8 @@ YAML_FILE="topics_definitions.yml"
 TARGET=KTD_PATH+"/"+YAML_FILE
 # Zookeeper Host
 ZK_HOST="zookeeper.service"
+# Kafka Host
+KAFKA_HOST="kafka.service"
 
 opt = Getopt::Std.getopts("ht:q")
 
@@ -124,7 +126,7 @@ if File.exists?(TARGET)
       info "Creating topic #{topic} with #{partitions} partition/s and replication factor #{replication}."
 
       # Run kafka-topics command and save output
-      output=`kafka-topics --create --topic #{topic} --partitions #{partitions} --replication-factor #{replication} --zookeeper #{ZK_HOST}`
+      output=`kafka-topics --create --topic #{topic} --partitions #{partitions} --replication-factor #{replication} --bootstrap-server #{KAFKA_HOST}:9092`
 
       # If result of previous command is 0 (no errors)
       if $?.to_s.split(" ")[3].to_i == 0
