@@ -127,9 +127,9 @@ if !File.directory?('/tmp/kafka_reassing')
 end
 
 zk_host="zookeeper.service:2181"
-
+kafka_host="kafka.service:9092"
 if opt["g"]
-  system("/usr/bin/kafka-preferred-replica-election --zookeeper #{zk_host}")
+  system("/usr/bin/kafka-preferred-replica-election --bootstrap-server #{kafka_host}")
 else
   begin
     zk = ZK.new(zk_host)
@@ -226,7 +226,7 @@ else
                   topic_details[topic] = {}
                   topic_details[topic]["partitions"] = real_desired_partitions
 
-                  system("/usr/bin/kafka-topics --zookeeper \"#{zk_host}\" --partition #{real_desired_partitions} --topic \"#{topic}\" --alter ")
+                  system("/usr/bin/kafka-topics --bootstrap-server \"#{kafka_host}\" --alter --topic \"#{topic}\" --partitions #{real_desired_partitions}")
 
                   partitions = get_partitions(zk, topic)
                   logit "        > New Partitions : #{partitions.join(",")}  (total: #{partitions.size})" if @debug
@@ -349,8 +349,8 @@ else
           if @execute
             json_file = "/tmp/kafka_reassing/#{UUIDTools::UUID.random_create.to_s}"
             File.open("#{json_file}", 'w'){|f| f.write(relocate_data_zk.to_json) }
-            logit "Executing /usr/bin/kafka-reassign-partitions --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute"
-            system("/usr/bin/kafka-reassign-partitions --zookeeper #{zk_host} --reassignment-json-file #{json_file} --execute")
+            logit "Executing /usr/bin/kafka-reassign-partitions --bootstrap-server #{kafka_host} --reassignment-json-file #{json_file} --execute"
+            system("/usr/bin/kafka-reassign-partitions --bootstrap-server #{kafka_host} --reassignment-json-file #{json_file} --execute")
             counter=0
             while zk.exists?(REASSIGN_PATH) and counter<30 do
               sleep 1
