@@ -17,7 +17,8 @@ TARGET=KTD_PATH+"/"+YAML_FILE
 # Zookeeper Host
 ZK_HOST="zookeeper.service"
 # Kafka Host
-KAFKA_HOST="kafka.service"
+KAFKA_HOST = `hostname`.chomp.split(".")[0] + ".node"
+KAFKA_HOST = "kafka.service" unless system("nc -zv #{KAFKA_HOST} 9092 2>/dev/null")
 
 opt = Getopt::Std.getopts("ht:q")
 
