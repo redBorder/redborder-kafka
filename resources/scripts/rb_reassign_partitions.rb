@@ -127,7 +127,10 @@ if !File.directory?('/tmp/kafka_reassing')
 end
 
 zk_host="zookeeper.service:2181"
-kafka_host="kafka.service:9092"
+KAFKA_HOST = `hostname`.chomp.split(".")[0] + ".node"
+KAFKA_HOST = "kafka.service" unless system("nc -zv #{KAFKA_HOST} 9092 2>/dev/null")
+kafka_host="#{KAFKA_HOST}:9092"
+
 if opt["g"]
   system("/usr/bin/kafka-preferred-replica-election --bootstrap-server #{kafka_host}")
 else
