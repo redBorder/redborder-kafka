@@ -15,7 +15,7 @@
 #######################################################################
 
 TOPIC="$1"
-ZK_HOST="zookeeper.service"
+KAFKA_HOST="kafka.service:9092"
 BEGIN=0
 COUNT=0
 MAXTIME=0
@@ -45,7 +45,7 @@ fi
 if [ "x$TOPIC" == "x" ]; then
     usage
 else
-    echo "Waiting $TOPIC data (zookeeper: $ZK_HOST) ..."
+    echo "Waiting $TOPIC data (kafka: $KAFKA_HOST) ..."
 
     options=""
 
@@ -54,18 +54,18 @@ else
 
     if [ $BEGIN -eq 1 ]; then
       if [ $KEY -eq 1 ]; then
-         /usr/bin/kafka-console-consumer --zookeeper $ZK_HOST --topic "$TOPIC" --from-beginning $options --property print.key=true
+         /usr/bin/kafka-console-consumer --bootstrap-server $KAFKA_HOST --topic "$TOPIC" --from-beginning $options --property print.key=true
          RET=$?
       else
-         /usr/bin/kafka-console-consumer --zookeeper $ZK_HOST --topic "$TOPIC" --from-beginning $options
+         /usr/bin/kafka-console-consumer --bootstrap-server $KAFKA_HOST --topic "$TOPIC" --from-beginning $options
          RET=$?
       fi
     else
       if [ $KEY -eq 1 ]; then
-         /usr/bin/kafka-console-consumer --zookeeper $ZK_HOST --topic "$TOPIC" $options --property print.key=true
+         /usr/bin/kafka-console-consumer --bootstrap-server $KAFKA_HOST --topic "$TOPIC" $options --property print.key=true
          RET=$?
       else
-         /usr/bin/kafka-console-consumer --zookeeper $ZK_HOST --topic "$TOPIC" $options
+         /usr/bin/kafka-console-consumer --bootstrap-server $KAFKA_HOST --topic "$TOPIC" $options
          RET=$?
       fi
     fi
