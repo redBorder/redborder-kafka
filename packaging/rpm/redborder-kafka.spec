@@ -32,6 +32,7 @@ install -D -m 0755 resources/bin/rb_consumer.sh %{buildroot}/usr/lib/redborder/b
 install -D -m 0755 resources/bin/rb_producer.sh %{buildroot}/usr/lib/redborder/bin/rb_producer.sh
 install -D -m 0644 resources/systemd/kafka.service %{buildroot}/usr/lib/systemd/system/kafka.service
 install -D -m 0755 resources/bin/rb_get_partitions.sh %{buildroot}/usr/lib/redborder/bin/rb_get_partitions.sh
+install -D -m 0755 resources/bin/rb_persec.sh %{buildroot}/usr/lib/redborder/bin/rb_persec.sh
 cp resources/scripts/*.rb %{buildroot}/usr/lib/redborder/scripts
 chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 
