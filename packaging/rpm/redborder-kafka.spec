@@ -12,7 +12,7 @@ Source0: %{name}-%{version}.tar.gz
 
 BuildRequires: systemd
 
-Requires: bash java confluent-kafka
+Requires: bash java confluent-kafka pv
 
 %description
 %{summary}
