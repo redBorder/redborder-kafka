@@ -44,6 +44,7 @@ chmod 0755 %{buildroot}/usr/lib/redborder/scripts/*
 /usr/lib/redborder/bin/rb_consumer.sh
 /usr/lib/redborder/bin/rb_producer.sh
 /usr/lib/redborder/bin/rb_get_partitions.sh
+/usr/lib/redborder/bin/rb_persec.sh
 /usr/lib/redborder/scripts
 %defattr(0644,root,root)
 /usr/lib/systemd/system/kafka.service
