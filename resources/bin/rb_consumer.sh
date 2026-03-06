@@ -14,10 +14,11 @@
 # along with redBorder. If not, see <http://www.gnu.org/licenses/>.
 #######################################################################
 
-TOPIC=""
+TOPIC="$1"
 KAFKA_HOST="kafka.service:9092"
 BEGIN=0
 COUNT=0
+MAXTIME=0
 KEY=0
 FILEPATH=""
 TIMEOUT=0   # in seconds
@@ -40,6 +41,7 @@ Options:
   -c <count>              Stop after consuming N messages
   -s <seconds>            Run consumer for N seconds (hard runtime limit)
   -f <file_path>          Save consumed events to file
+  -m <seconds>            Timeout if no meesages gotten
   -h, --help              Show this help message
 
 Examples:
@@ -77,10 +79,10 @@ while getopts "kbt:c:s:f:h" name; do
   case $name in
     k) KEY=1;;
     b) BEGIN=1;;
-    t) TOPIC="$OPTARG";;
-    c) COUNT="$OPTARG";;
-    s) TIMEOUT="$OPTARG";;
-    f) FILEPATH="$OPTARG";;
+    t) TOPIC=$OPTARG;;
+    c) COUNT=$OPTARG;;
+    s) TIMEOUT=$OPTARG;;
+    f) FILEPATH=$OPTARG;;
     h) usage;;
     *) usage;;
   esac
@@ -105,12 +107,14 @@ echo "Waiting for $TOPIC data (kafka: $KAFKA_HOST) ..."
 
 # Build options
 options=""
-[ "$COUNT" -gt 0 ] && options="$options --max-messages $COUNT"
-[ "$KEY" -eq 1 ] && options="$options --property print.key=true"
-[ "$BEGIN" -eq 1 ] && options="$options --from-beginning"
+[ "$COUNT" -gt 0 ] && options+=(--max-messages "$COUNT")
+[ "$KEY" -eq 1 ] && options+=(--property print.key=true)
+[ "$BEGIN" -eq 1 ] && options+=(--from-beginning)
 
-# Build base command
-cmd=(timeout "$TIMEOUT"s /usr/bin/kafka-console-consumer --bootstrap-server "$KAFKA_HOST" --topic "$TOPIC" $options)
+# Build the base command
+cmd=(/usr/bin/kafka-console-consumer --bootstrap-server "$KAFKA_HOST" --topic "$TOPIC" "${options[@]}")
+
+[ "$TIMEOUT" -gt 0 ] && cmd=(timeout "$TIMEOUT"s "${cmd[@]}")
 
 # Run command with optional tee
 if [ -n "$FILEPATH" ]; then
