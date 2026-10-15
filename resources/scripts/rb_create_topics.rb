@@ -79,7 +79,7 @@ def usage()
 end
 
 # Check whether file exists
-if File.exists?(TARGET)
+if File.exist?(TARGET)
 
   # Load file from target path (See constants)
   config=YAML.load_file(TARGET)
